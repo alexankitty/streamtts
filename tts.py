@@ -23,8 +23,8 @@ kokoro = Kokoro("kokoro-v1.0.onnx", "voices-v1.0.bin")
 
 # rvc
 rvc = RVCInference(device="cuda:0")
-rvc.load_model("./models/miku_default_rvc/miku_default_rvc.pth")
-
+rvc.load_model("./models/miku_default_rvc/miku_default_rvc.pth", index_path="./models/miku_default_rvc/added_IVF4457_Flat_nprobe_1_miku_default_rvc_v2.index")
+rvc.set_params(f0up_key=6, f0method="rmvpe")
 
 class TtsRequest(BaseModel):
     text: str
