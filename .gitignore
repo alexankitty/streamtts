@@ -1,0 +1,11 @@
+models
+venv
+.venv
+.cache
+temp
+rmvpe.pt
+hubert_base.pt
+*.bin
+*.onnx
+*.wav
+models

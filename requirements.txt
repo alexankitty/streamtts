@@ -1,0 +1,9 @@
+misaki[en]
+kokoro-onnx
+uvicorn
+transformers
+torch<2.6
+torchaudio<2.6
+fastapi
+numpy
+rvc-python
