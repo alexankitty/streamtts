@@ -24,16 +24,21 @@ kokoro = Kokoro("kokoro-v1.0.onnx", "voices-v1.0.bin")
 # rvc
 rvc = RVCInference(device="cuda:0")
 rvc.load_model("./models/miku_default_rvc/miku_default_rvc.pth", index_path="./models/miku_default_rvc/added_IVF4457_Flat_nprobe_1_miku_default_rvc_v2.index")
-rvc.set_params(f0up_key=6, f0method="rmvpe")
+rvc.set_params(f0up_key=6, f0method="crepe")
 
 class TtsRequest(BaseModel):
     text: str
 
 def setup_routes(app: FastAPI):
     @app.post("/tts")
-    async def tts(request: TtsRequest):
+    async def ttspost(request: TtsRequest):
         result = gen(request.text)
         return Response(content=result, media_type="audio/wav")
+    @app.get("/tts")
+    async def ttsget(text: str = ''):
+        result = gen(text)
+        return Response(content=result, media_type="audio/wav")
+    
 
 def gen(text):
     # Phonemize
@@ -42,7 +47,7 @@ def gen(text):
     # blends
     heart: np.ndarray = kokoro.get_voice_style("af_heart")
     alpha: np.ndarray = kokoro.get_voice_style("jf_alpha")
-    blend = np.add(heart * (50 / 100), alpha * (50 / 100))
+    blend = np.add(heart * (33 / 100), alpha * (66 / 100))
 
     # Create
     samples, sample_rate = kokoro.create(phonemes, blend, is_phonemes=True)
