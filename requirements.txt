@@ -1,9 +1,10 @@
 misaki[en]
 kokoro-onnx
 uvicorn
-transformers
-torch<2.6
-torchaudio<2.6
+transformers==4.53.1
+torch==2.5.1
+torchaudio==2.5.1
 fastapi
-numpy
+numpy==1.23.5
 rvc-python
+hatesonar_onnxruntime@git+https://github.com/alexankitty/HateSonar
