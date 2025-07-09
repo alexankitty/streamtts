@@ -6,6 +6,8 @@ import os
 from pydantic import BaseModel
 import uvicorn
 import random
+from glob import glob
+import json
 
 from kokoro_onnx import Kokoro
 
@@ -26,39 +28,51 @@ kokoro = Kokoro("kokoro-v1.0.onnx", "voices-v1.0.bin")
 
 # rvc
 rvc = RVCInference(device="cuda:0")
-rvc.load_model("./models/miku_default_rvc/miku_default_rvc.pth", index_path="./models/miku_default_rvc/added_IVF4457_Flat_nprobe_1_miku_default_rvc_v2.index")
-rvc.set_params(f0up_key=6, f0method="crepe")
+rvc.set_params(f0up_key=8, f0method="rmvpe")
 
 # hate speech replacers
 with open("unhateful-phrases.txt", "r") as f:
     unhateful_phrases = f.readlines()
 sonar = Sonar()
-hatespeech_threshold = 0.2
+hatespeech_threshold = 0.3
 
 class TtsRequest(BaseModel):
     text: str
+    voice: str
 
 def setup_routes(app: FastAPI):
     @app.post("/tts")
     async def ttspost(request: TtsRequest):
-        result = gen(request.text)
+        result = gen(request.text, request.voice)
         return Response(content=result, media_type="audio/wav")
     @app.get("/tts")
-    async def ttsget(text: str = ''):
-        result = gen(text)
+    async def ttsget(text: str = '', voice: str = ''):
+        result = gen(text, voice)
         return Response(content=result, media_type="audio/wav")
+    @app.get("/voices")
+    async def voicesget():
+        voices = glob("*", root_dir="models")
+        return JSONResponse(content=voices)
     
 
-def gen(text):
+def gen(text, voice):
     text = checkText(text)
+    if not voice:
+        voice = "miku"
+    voice = voice.lower()
+    with open(f"./models/{voice}/pitch", "r") as f:
+        pitch = f.readline().strip()
+    
+    rvc.set_params(f0up_key=pitch)
+    rvc.load_model(f"./models/{voice}/model.pth", index_path=f"./models/{voice}/model.index")
 
     # Phonemize
     phonemes, _ = g2p(text)
 
     # blends
-    heart: np.ndarray = kokoro.get_voice_style("af_heart")
-    alpha: np.ndarray = kokoro.get_voice_style("jf_alpha")
-    blend = np.add(heart * (33 / 100), alpha * (66 / 100))
+    voice1: np.ndarray = kokoro.get_voice_style("af_kore")
+    voice2: np.ndarray = kokoro.get_voice_style("am_adam")
+    blend = np.add(voice1 * (50 / 100), voice2 * (50 / 100))
 
     # Create
     samples, sample_rate = kokoro.create(phonemes, blend, is_phonemes=True)
