@@ -9,3 +9,5 @@ hubert_base.pt
 *.onnx
 *.wav
 models
+__pycache__
+assets

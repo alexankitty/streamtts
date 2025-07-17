@@ -1,10 +1,14 @@
 misaki[en]
-kokoro-onnx
+kokoro-onnx[gpu]
+onnxruntime-gpu
+tensorrt
+soundfile
 uvicorn
 transformers==4.53.1
 torch==2.5.1
 torchaudio==2.5.1
 fastapi
-numpy==1.23.5
-rvc-python
+numpy
+rvc
 hatesonar_onnxruntime@git+https://github.com/alexankitty/HateSonar
+pyyaml
