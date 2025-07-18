@@ -12,3 +12,4 @@ numpy
 rvc
 hatesonar_onnxruntime@git+https://github.com/alexankitty/HateSonar
 pyyaml
+audio-separator

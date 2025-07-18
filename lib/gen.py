@@ -8,7 +8,32 @@ from hatesonar import Sonar
 from lib.config import ModelConfig, loadConfig
 from lib.kokoro import gen_tts, blend_voices
 from rvc.modules.vc.modules import VC
+from pydub import AudioSegment
+from audio_separator.separator import Separator
+from yt_dlp import YoutubeDL
+import re
+
 load_dotenv(".env")
+
+separator = Separator()
+
+separator.load_model(model_filename='vocals_mel_band_roformer.ckpt')
+output_names = {
+    "Vocals": "vocals_output",
+    "Instrumental": "instrumental_output",
+    "Other": "instrumental_output"
+}
+
+ydl_opts = {
+    'format': 'bestaudio/best',
+    # ℹ️ See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
+    'postprocessors': [{  # Extract audio using ffmpeg
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'wav',
+    }],
+    'outtmpl': '%(title)s.%(ext)s',
+    'restrictfilenames': True
+}
 
 
 # Misaki G2P with espeak-ng fallback
@@ -71,3 +96,54 @@ def checkText(text: str):
         return random.choice(unhateful_phrases)
     return text
 
+def replace_vocals(url: str, name: str, pitch: int):
+    url = re.sub(r'\?.*$', '', url)
+    model = f"./models/{name}/model.pth"
+    model_index = f"./models/{name}/model.index"
+    vc.get_vc(model)
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
+        info_with_audio_extension = dict(info)
+        info_with_audio_extension['ext'] = 'wav'
+        final_filename = ydl.prepare_filename(info_with_audio_extension)
+
+    output_files = separator.separate(final_filename, output_names)
+
+    tgt_sr, audio_opt, times, _ = vc.vc_single(
+                1,
+                os.path.join(os.getcwd() ,"vocals_output.wav"),
+                pitch,
+                'rmvpe',
+                index_file=model_index,
+                filter_radius=10,
+                protect=0,
+                index_rate=0.33
+        )
+    wavfile.write("vocals_output.wav", tgt_sr, audio_opt)
+
+    sound1 = AudioSegment.from_file("vocals_output.wav")
+    sound2 = AudioSegment.from_file("instrumental_output.wav")
+
+    combined = sound1.overlay(sound2)
+
+    os.unlink(final_filename)
+    os.unlink("vocals_output.wav")
+    os.unlink("instrumental_output.wav")
+
+    with tempfile.NamedTemporaryFile(delete=False) as tmp_output:
+        output_path = tmp_output.name
+    
+    combined.export(output_path, format='mp3', bitrate="150k")
+    with open(output_path, "rb") as file:
+        final_output = file.read()
+
+    os.unlink(output_path)
+    return final_output
+
+def video_info(url: str):
+    with YoutubeDL() as ydl: 
+        info_dict = ydl.extract_info(url, download=False)
+        info = {
+            "title": info_dict.get('title', None)
+        }
+        return info
