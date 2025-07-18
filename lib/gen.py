@@ -10,7 +10,7 @@ from lib.kokoro import gen_tts, blend_voices
 from rvc.modules.vc.modules import VC
 from pydub import AudioSegment
 from audio_separator.separator import Separator
-from yt_dlp import YoutubeDL
+import yt_dlp
 import re
 
 load_dotenv(".env")
@@ -25,17 +25,16 @@ output_names = {
 }
 
 ydl_opts = {
+    'cookiefile': str(os.path.join(os.getcwd(), 'cookies.txt')),
     'format': 'bestaudio/best',
-    # ℹ️ See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
     'postprocessors': [{  # Extract audio using ffmpeg
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'wav',
     }],
     'outtmpl': '%(title)s.%(ext)s',
     'restrictfilenames': True,
-    'cookiefile': os.path.join(os.getcwd(), 'cookies.txt')
+    'quiet': True
 }
-
 
 # Misaki G2P with espeak-ng fallback
 fallback = espeak.EspeakFallback(british=False)
@@ -57,7 +56,6 @@ def gen(text: str, voice: str = 'miku') -> bytes:
     config: ModelConfig = loadConfig(voice)
     if not config:
         return
-    print(config)
     text = checkText(text)
     voice = voice.lower()
 
@@ -102,7 +100,7 @@ def replace_vocals(url: str, name: str, pitch: int):
     model = f"./models/{name}/model.pth"
     model_index = f"./models/{name}/model.index"
     vc.get_vc(model)
-    with YoutubeDL(ydl_opts) as ydl:
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         info_with_audio_extension = dict(info)
         info_with_audio_extension['ext'] = 'wav'
@@ -143,7 +141,7 @@ def replace_vocals(url: str, name: str, pitch: int):
 
 def video_info(url: str):
     url = re.sub(r'list=\w+', '', url)
-    with YoutubeDL() as ydl: 
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl: 
         info_dict = ydl.extract_info(url, download=False)
         info = {
             "title": info_dict.get('title', None)
