@@ -32,7 +32,8 @@ ydl_opts = {
         'preferredcodec': 'wav',
     }],
     'outtmpl': '%(title)s.%(ext)s',
-    'restrictfilenames': True
+    'restrictfilenames': True,
+    'cookiefile': os.path.join(os.getcwd(), 'cookies.txt')
 }
 
 
@@ -82,7 +83,7 @@ def gen(text: str, voice: str = 'miku') -> bytes:
             index_file=indexPath,
             filter_radius=config['filter_radius'],
             protect=config['protect'],
-            index_rate=config['index_rate']
+            index_rate=config['index_rate'],
       )
     wavfile.write(output_path, tgt_sr, audio_opt)
 
@@ -97,7 +98,7 @@ def checkText(text: str):
     return text
 
 def replace_vocals(url: str, name: str, pitch: int):
-    url = re.sub(r'\?.*$', '', url)
+    url = re.sub(r'list=\w+', '', url)
     model = f"./models/{name}/model.pth"
     model_index = f"./models/{name}/model.index"
     vc.get_vc(model)
@@ -141,6 +142,7 @@ def replace_vocals(url: str, name: str, pitch: int):
     return final_output
 
 def video_info(url: str):
+    url = re.sub(r'list=\w+', '', url)
     with YoutubeDL() as ydl: 
         info_dict = ydl.extract_info(url, download=False)
         info = {
