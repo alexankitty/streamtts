@@ -7,6 +7,7 @@ except ImportError:
     from yaml import Loader, Dumper
 
 defaultConfig = {
+    "displayname": "RVC Voice",
     "pitch": 0,
     "voices": {
         "af_kore": 0.5,
@@ -36,6 +37,7 @@ def loadConfig(modelname: str) -> ModelConfig:
             return safe_load(file)
     except Exception as e:
         print("No config present, creating new config")
+        defaultConfig["displayname"] = modelname
         parsedConfig = dump(defaultConfig, Dumper=Dumper)
         with open(path, "w") as file:
             file.write(parsedConfig)

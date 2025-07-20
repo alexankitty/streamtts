@@ -12,10 +12,13 @@ from pydub import AudioSegment
 from audio_separator.separator import Separator
 import yt_dlp
 import re
+import base64
 
 load_dotenv(".env")
 
 separator = Separator()
+
+base_path = os.path.join(os.getcwd(), 'models/')
 
 separator.load_model(model_filename='vocals_mel_band_roformer.ckpt')
 output_names = {
@@ -147,3 +150,33 @@ def video_info(url: str):
             "title": info_dict.get('title', None)
         }
         return info
+    
+def voice_info(voice: str):
+    config: ModelConfig = loadConfig(voice)
+    if not config:
+        return
+    if 'displayname' in config:
+        displayname = config['displayname']
+    else:
+        displayname = voice
+    if os.path.exists(os.path.join(base_path, voice, 'avatar.png')):
+        avatar_url = f'/voiceavatar/{voice}'
+    else:
+        avatar_url = ''
+    if not config:
+        return
+    info = {
+        "displayname": displayname,
+        "avatarurl": avatar_url
+    }
+    return info
+
+def voice_avatar(voice: str):
+    if os.path.exists(os.path.join(base_path, voice, 'avatar.png')):
+        try:
+            with open(os.path.join(base_path, voice, 'avatar.png'), 'rb') as f: 
+                return f.read()
+        except Exception as ex:
+            print(ex)
+            return False
+    return False

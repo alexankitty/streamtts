@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 import uvicorn
 from glob import glob
-from lib.gen import gen, replace_vocals, video_info
+from lib.gen import gen, replace_vocals, video_info, voice_info, voice_avatar
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +19,9 @@ class YtReplaceRequest(BaseModel):
 
 class VideoInfoRequest(BaseModel):
     url: str
+
+class VoiceInfoRequest(BaseModel):
+    voice: str
 
 def setup_routes(app: FastAPI):
     @app.post("/tts")
@@ -39,6 +42,20 @@ def setup_routes(app: FastAPI):
         voices = glob("*", root_dir="models")
         return JSONResponse(content=voices)
     
+    @app.get('/voiceinfo/{voice}')
+    async def voiceget(voice: str):
+        info = voice_info(voice)
+        if not info:
+            raise HTTPException(status_code=400, detail="Failed to get voice info.")
+        return JSONResponse(content=info)
+    
+    @app.get('/voiceavatar/{voice}')
+    async def voiceavatarget(voice):
+        avatar = voice_avatar(voice)
+        if not avatar:
+            raise HTTPException(status_code=400, detail="Failed to get voice avatar.")
+        return Response(content=avatar, media_type="image/png")
+
     @app.get("/replace_yt")
     async def ryt_get(voice: str, url: str, pitch: int = 0):
         result = replace_vocals(url, voice, pitch)

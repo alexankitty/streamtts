@@ -1,4 +1,5 @@
 ---
+displayname: "RVC Voice"
 pitch: 0 #+/- semitones, 12 for every octave
 voices:
     af_heart: 0.5
