@@ -5,8 +5,6 @@ Description=Stream TTS
 Type=simple
 RemainAfterExit=yes
 ExecStart=bash start.sh
-StandardOutput=null
-StandardError=null
 WorkingDirectory=/home/alexandra/git/streamtts
 
 [Install]

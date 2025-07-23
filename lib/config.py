@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from yaml import safe_load, dump
+from yaml import load, dump
 import os
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -32,13 +32,14 @@ def loadConfig(modelname: str) -> ModelConfig:
     if not os.path.exists(os.path.join(os.getcwd(), f'models/{modelname}')):
         return False
     path = os.path.join(os.getcwd(), f'models/{modelname}/config.yaml')
-    try: 
-        with open(path, "r") as file:
-            return safe_load(file)
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            yaml = file.read();
+            return load(yaml, Loader=Loader)
     except Exception as e:
-        print("No config present, creating new config")
+        print(f"Unable to load config: {e}")
         defaultConfig["displayname"] = modelname
-        parsedConfig = dump(defaultConfig, Dumper=Dumper)
+        parsedConfig = dump(defaultConfig, Dumper=Dumper, allow_unicode=True, sort_keys=False)
         with open(path, "w") as file:
             file.write(parsedConfig)
         return defaultConfig

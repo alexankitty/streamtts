@@ -1,2 +1,2 @@
 source .venv/bin/activate
-python tts.py
+PYTHONIOENCODING=utf8 python tts.py
