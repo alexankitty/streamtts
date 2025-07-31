@@ -60,13 +60,13 @@ def setup_routes(app: FastAPI):
     async def ryt_get(voice: str, url: str, pitch: int = 0):
         result = replace_vocals(url, voice, pitch)
         if not result:
-            raise HTTPException(status_code=400, detail="Fail to replace youtube video vocals.")
+            raise HTTPException(status_code=400, detail="Failed to replace youtube video vocals.")
         return Response(content=result, media_type="audio/mp3")
     @app.post("/replace_yt")
     async def ryt_post(request: YtReplaceRequest):
         result = replace_vocals(request.url, request.voice, request.pitch)
         if not result:
-            raise HTTPException(status_code=400, detail="Fail to replace youtube video vocals.")
+            raise HTTPException(status_code=400, detail="Failed to replace youtube video vocals.")
         return Response(content=result, media_type="audio/mp3")
     
     @app.get("/ytinfo")

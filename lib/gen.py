@@ -99,6 +99,7 @@ def checkText(text: str):
     return text
 
 def replace_vocals(url: str, name: str, pitch: int):
+    name = name.lower()
     url = re.sub(r'list=\w+', '', url)
     model = f"./models/{name}/model.pth"
     model_index = f"./models/{name}/model.index"
@@ -152,6 +153,7 @@ def video_info(url: str):
         return info
     
 def voice_info(voice: str):
+    voice = voice.lower()
     config: ModelConfig = loadConfig(voice)
     if not config:
         return
@@ -172,6 +174,7 @@ def voice_info(voice: str):
     return info
 
 def voice_avatar(voice: str):
+    voice = voice.lower()
     if os.path.exists(os.path.join(base_path, voice, 'avatar.png')):
         try:
             with open(os.path.join(base_path, voice, 'avatar.png'), 'rb') as f: 
