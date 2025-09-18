@@ -56,12 +56,15 @@ sonar = Sonar()
 hatespeech_threshold = 0.3
 
 def gen(text: str, voice: str = 'miku') -> bytes:
+    if not voice:
+        voice = 'miku'
+
     config: ModelConfig = loadConfig(voice)
     if not config:
         return
     text = checkText(text)
     voice = voice.lower()
-
+        
     modelPath = os.path.join(os.getcwd(), f'models/{voice}/model.pth')
     indexPath = os.path.join(os.getcwd(), f'models/{voice}/model.index')
 
