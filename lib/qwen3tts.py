@@ -10,6 +10,19 @@ _model = None
 MODEL_NAME = "Qwen/Qwen3-TTS-12Hz-1.7B-Base"
 PROMPT_FILENAME = "voice_clone_prompt.pt"
 
+COMMON_GEN_KWARGS = dict(
+        max_new_tokens=2048,
+        do_sample=True,
+        top_k=50,
+        top_p=1.0,
+        temperature=0.9,
+        repetition_penalty=1.05,
+        subtalker_dosample=True,
+        subtalker_top_k=50,
+        subtalker_top_p=1.0,
+        subtalker_temperature=0.9,
+    )
+
 def _get_model():
     global _model
     if _model is None:
@@ -92,6 +105,7 @@ def generate(text: str, voice_dir: str, language: str = "Auto") -> bytes:
         text=text,
         language=language,
         voice_clone_prompt=prompt,
+        **COMMON_GEN_KWARGS
     )
 
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
