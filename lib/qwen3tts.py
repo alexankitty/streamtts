@@ -30,6 +30,7 @@ def _get_model():
             MODEL_NAME,
             device_map="cuda:0",
             dtype=torch.bfloat16,
+            attn_implementation="flash_attention_2",
         )
     return _model
 
