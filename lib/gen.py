@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from hatesonar import Sonar
 from lib.config import ModelConfig, loadConfig
 from lib.kokoro import gen_tts, blend_voices
+from lib import qwen3tts
 from rvc.modules.vc.modules import VC
 from pydub import AudioSegment
 from audio_separator.separator import Separator
@@ -64,22 +65,27 @@ def gen(text: str, voice: str = 'miku') -> bytes:
         return
     text = checkText(text)
     voice = voice.lower()
-        
-    modelPath = os.path.join(os.getcwd(), f'models/{voice}/model.pth')
-    indexPath = os.path.join(os.getcwd(), f'models/{voice}/model.index')
+
+    voice_dir = os.path.join(os.getcwd(), f'models/{voice}')
+
+    # Qwen3-TTS voice clone path
+    if qwen3tts.can_use_qwen3tts(config, voice_dir):
+        language = config.get('language', 'Auto')
+        return qwen3tts.generate(text, voice_dir, language=language)
+
+    # Kokoro + RVC path
+    modelPath = os.path.join(voice_dir, 'model.pth')
+    indexPath = os.path.join(voice_dir, 'model.index')
 
     with tempfile.NamedTemporaryFile(delete=False) as tmp_output:
         output_path = tmp_output.name
-
-    # Phonemize
-    # phonemes, _ = g2p(text)
 
     blend = blend_voices(config['voices'])
     samples, sample_rate = gen_tts(text, blend, speed=config['speed'])
     wavfile.write(output_path, sample_rate, samples)
 
     vc.get_vc(modelPath)
-    tgt_sr, audio_opt, times, _ = vc.vc_single(
+    tgt_sr, audio_opt, times, _ = vc.vc_inference(
             1,
             output_path,
             config['pitch'],
