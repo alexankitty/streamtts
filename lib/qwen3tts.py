@@ -21,6 +21,12 @@ def _get_model():
     return _model
 
 
+def load_model():
+    print(f"Loading Qwen3-TTS model: {MODEL_NAME}")
+    _get_model()
+    print("Qwen3-TTS model loaded.")
+
+
 def _save_prompt(voice_dir: str, prompt_items):
     data = []
     for item in prompt_items:

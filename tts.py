@@ -2,6 +2,7 @@ from pydantic import BaseModel
 import uvicorn
 from glob import glob
 from lib.gen import gen, replace_vocals, separate_vocals, video_info, voice_info, voice_avatar
+from lib import qwen3tts
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -108,6 +109,7 @@ def create_app():
     return app
 
 if __name__ == '__main__':
+    qwen3tts.load_model()
     app = create_app()
     # Set up server options
     host = "0.0.0.0"
