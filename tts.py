@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 import uvicorn
 from glob import glob
-from lib.gen import gen, replace_vocals, video_info, voice_info, voice_avatar
+from lib.gen import gen, replace_vocals, separate_vocals, video_info, voice_info, voice_avatar
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -69,6 +69,19 @@ def setup_routes(app: FastAPI):
             raise HTTPException(status_code=400, detail="Failed to replace youtube video vocals.")
         return Response(content=result, media_type="audio/mp3")
     
+    @app.get("/separate_yt")
+    async def separate_yt_get(url: str):
+        result = separate_vocals(url)
+        if not result:
+            raise HTTPException(status_code=400, detail="Failed to separate youtube video.")
+        return Response(content=result, media_type="application/zip", headers={"Content-Disposition": "attachment; filename=separated.zip"})
+    @app.post("/separate_yt")
+    async def separate_yt_post(request: VideoInfoRequest):
+        result = separate_vocals(request.url)
+        if not result:
+            raise HTTPException(status_code=400, detail="Failed to separate youtube video.")
+        return Response(content=result, media_type="application/zip", headers={"Content-Disposition": "attachment; filename=separated.zip"})
+
     @app.get("/ytinfo")
     async def ytinfo_get(url: str):
         info = video_info(url)

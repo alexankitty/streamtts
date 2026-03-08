@@ -1,6 +1,8 @@
 from scipy.io import wavfile
 from misaki import en, espeak
 import tempfile
+import zipfile
+import io
 import os
 import random
 from dotenv import load_dotenv
@@ -151,6 +153,30 @@ def replace_vocals(url: str, name: str, pitch: int):
 
     os.unlink(output_path)
     return final_output
+
+def separate_vocals(url: str) -> bytes:
+    url = re.sub(r'list=\w+', '', url)
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=True)
+        info_with_audio_extension = dict(info)
+        info_with_audio_extension['ext'] = 'wav'
+        final_filename = ydl.prepare_filename(info_with_audio_extension)
+
+    output_files = separator.separate(final_filename, output_names)
+
+    vocals_path = "vocals_output.wav"
+    instrumental_path = "instrumental_output.wav"
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        zf.write(vocals_path, "vocals.wav")
+        zf.write(instrumental_path, "instrumental.wav")
+
+    os.unlink(final_filename)
+    os.unlink(vocals_path)
+    os.unlink(instrumental_path)
+
+    return buf.getvalue()
 
 def video_info(url: str):
     url = re.sub(r'list=\w+', '', url)
