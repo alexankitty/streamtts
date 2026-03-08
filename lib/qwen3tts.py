@@ -3,11 +3,12 @@ import torch
 import soundfile as sf
 import tempfile
 from qwen_tts import Qwen3TTSModel
+from qwen_tts.inference.qwen3_tts_model import VoiceClonePromptItem
 
 _model = None
-_voice_clone_prompts = {}
 
 MODEL_NAME = "Qwen/Qwen3-TTS-12Hz-1.7B-Base"
+PROMPT_FILENAME = "voice_clone_prompt.pt"
 
 def _get_model():
     global _model
@@ -20,9 +21,39 @@ def _get_model():
     return _model
 
 
+def _save_prompt(voice_dir: str, prompt_items):
+    data = []
+    for item in prompt_items:
+        data.append({
+            "ref_code": item.ref_code.cpu() if item.ref_code is not None else None,
+            "ref_spk_embedding": item.ref_spk_embedding.cpu(),
+            "x_vector_only_mode": item.x_vector_only_mode,
+            "icl_mode": item.icl_mode,
+            "ref_text": item.ref_text,
+        })
+    torch.save(data, os.path.join(voice_dir, PROMPT_FILENAME))
+
+
+def _load_prompt(voice_dir: str):
+    path = os.path.join(voice_dir, PROMPT_FILENAME)
+    device = _get_model().device
+    data = torch.load(path, map_location=device, weights_only=False)
+    items = []
+    for d in data:
+        items.append(VoiceClonePromptItem(
+            ref_code=d["ref_code"].to(device) if d["ref_code"] is not None else None,
+            ref_spk_embedding=d["ref_spk_embedding"].to(device),
+            x_vector_only_mode=d["x_vector_only_mode"],
+            icl_mode=d["icl_mode"],
+            ref_text=d["ref_text"],
+        ))
+    return items
+
+
 def _get_voice_clone_prompt(voice_dir: str):
-    if voice_dir in _voice_clone_prompts:
-        return _voice_clone_prompts[voice_dir]
+    prompt_path = os.path.join(voice_dir, PROMPT_FILENAME)
+    if os.path.isfile(prompt_path):
+        return _load_prompt(voice_dir)
 
     clip_path = os.path.join(voice_dir, "voice_clip.wav")
     script_path = os.path.join(voice_dir, "voice_script.txt")
@@ -35,7 +66,7 @@ def _get_voice_clone_prompt(voice_dir: str):
         ref_audio=clip_path,
         ref_text=ref_text,
     )
-    _voice_clone_prompts[voice_dir] = prompt
+    _save_prompt(voice_dir, prompt)
     return prompt
 
 
