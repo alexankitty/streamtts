@@ -12,6 +12,7 @@ from fastapi.responses import Response, JSONResponse
 class TtsRequest(BaseModel):
     text: str
     voice: str
+    skip_hatespeech_check: bool = False
 
 class YtReplaceRequest(BaseModel):
     voice: str
@@ -32,8 +33,8 @@ def setup_routes(app: FastAPI):
             raise HTTPException(status_code=400, detail="Failed to generate voice.")
         return Response(content=result, media_type="audio/wav")
     @app.get("/tts")
-    async def ttsget(text: str = '', voice: str = ''):
-        result = gen(text, voice)
+    async def ttsget(text: str = '', voice: str = '', skip_hatespeech_check: bool = False):
+        result = gen(text, voice, skip_hatespeech_check=skip_hatespeech_check)
         if not result:
             raise HTTPException(status_code=400, detail="Failed to generate voice.")
         return Response(content=result, media_type="audio/wav")

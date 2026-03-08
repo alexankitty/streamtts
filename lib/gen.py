@@ -58,14 +58,14 @@ with open(os.path.join(os.getcwd(), "assets/unhateful-phrases.txt"), "r") as f:
 sonar = Sonar()
 hatespeech_threshold = 0.3
 
-def gen(text: str, voice: str = 'miku') -> bytes:
+def gen(text: str, voice: str = 'miku', skip_hatespeech_check: bool = False) -> bytes:
     if not voice:
         voice = 'miku'
 
     config: ModelConfig = loadConfig(voice)
     if not config:
         return
-    text = checkText(text)
+    text = checkText(text) if not skip_hatespeech_check else text
     voice = voice.lower()
 
     voice_dir = os.path.join(os.getcwd(), f'models/{voice}')
